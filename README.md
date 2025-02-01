@@ -7,7 +7,3 @@ This application uses machine learning to predict the best Fantasy Premier Leagu
 - Generates an optimized team within a given budget and formation.
 - Displays player stats in a user-friendly modal.
 
-## Setup Instructions
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/fpl-optimizer.git
