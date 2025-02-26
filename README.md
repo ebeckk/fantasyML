@@ -8,7 +8,7 @@ This application uses machine learning to predict the best Fantasy Premier Leagu
 - Displays player stats in a user-friendly modal.
 
 ## Work In Progress
-- Use newsapi to read premier league news and apply information to predictions using NLP sentiment intensity analyzer.
+- Use [newsapi](https://newsapi.org/) to read premier league news and apply information to predictions using [NLTK](https://www.nltk.org/howto/sentiment.html) sentiment intensity analyzer.
 
 ## Setup Instructions
 1. Clone the repository:
