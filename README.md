@@ -7,6 +7,9 @@ This application uses machine learning to predict the best Fantasy Premier Leagu
 - Generates an optimized team within a given budget and formation.
 - Displays player stats in a user-friendly modal.
 
+## Work In Progress
+- Use newsapi to read premier league news and apply information to predictions using NLP sentiment intensity analyzer.
+
 ## Setup Instructions
 1. Clone the repository:
    ```bash
