@@ -1,8 +1,22 @@
 from flask import Flask, render_template, request, jsonify
 import pandas as pd
 import joblib
+from dotenv import load_dotenv
+import os
+from newsapi import NewsApiClient
+from nltk.sentiment import SentimentIntensityAnalyzer
+import nltk
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
+app.secret_key = os.getenv('FLASK_SECRET_KEY')
+
+# Initialize NewsAPI client and sentiment analyzer
+newsapi = NewsApiClient(api_key=os.getenv('NEWS_API_KEY'))
+nltk.download('vader_lexicon')
+sia = SentimentIntensityAnalyzer()
 
 def load_data():
     # Load the processed player data, trained model, and feature names
@@ -47,11 +61,79 @@ def get_best_team(df, model, features, formation='3-4-3', budget=100.0):
         if total_cost + player['Price'] <= budget:
             selected_team.append(player.to_dict())
             total_cost += player['Price']
-            if len(selected_team) == (1 + def_num + mid_num + fwd_num + 4):  # Total players in squad
-                break
+        if len(selected_team) == (1 + def_num + mid_num + fwd_num + 4):  # Total players in squad
+            break
     
     return pd.DataFrame(selected_team), subs
 
+# News API Routes
+@app.route('/api/v1/news/general', methods=['GET'])
+def get_general_news():
+    try:
+        articles_response = newsapi.get_everything(
+            q='Premier League',
+            language='en',
+            sort_by='publishedAt'
+        )
+        processed_news = process_articles(articles_response.get('articles', []))
+        return jsonify({'status': 'success', 'data': processed_news})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/v1/news/team/<team_name>', methods=['GET'])
+def get_team_news(team_name):
+    try:
+        articles_response = newsapi.get_everything(
+            q=f'"{team_name}" Premier League',
+            language='en',
+            sort_by='publishedAt'
+        )
+        processed_news = process_articles(articles_response.get('articles', []))
+        return jsonify({'status': 'success', 'data': processed_news})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/v1/news/player/<player_name>', methods=['GET'])
+def get_player_news(player_name):
+    try:
+        articles_response = newsapi.get_everything(
+            q=f'"{player_name}" Premier League',
+            language='en',
+            sort_by='publishedAt'
+        )
+        processed_news = process_articles(articles_response.get('articles', []))
+        return jsonify({'status': 'success', 'data': processed_news})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+def process_articles(articles):
+    """Process articles to include sentiment analysis."""
+    processed_news = []
+    for article in articles:
+        description = article.get('description', '')
+        sentiment = sia.polarity_scores(description or "")
+        processed_news.append({
+            'title': article.get('title'),
+            'description': description,
+            'url': article.get('url'),
+            'published_at': article.get('publishedAt'),
+            'source': article.get('source', {}).get('name'),
+            'sentiment': sentiment,
+            'sentiment_category': categorize_sentiment(sentiment)
+        })
+    return processed_news
+
+def categorize_sentiment(sentiment):
+    """Categorize the sentiment based on the compound score."""
+    compound = sentiment['compound']
+    if compound >= 0.05:
+        return 'positive'
+    elif compound <= -0.05:
+        return 'negative'
+    else:
+        return 'neutral'
+
+# Existing Routes
 @app.route('/')
 def home():
     return render_template('index.html')
